@@ -734,3 +734,11 @@ This project demonstrates a modular ROS 2 navigation architecture using Nav2 com
 * RViz2 visualization.
 
 The implementation avoids relying on the complete `nav2_bringup` workflow and instead builds the required navigation pipeline from individual Nav2 components, providing a clearer understanding of how the ROS 2 navigation stack operates internally — and demonstrating that understanding through successful autonomous navigation in simulation.
+
+---
+
+# 23. Contact Info
+
+* **Name:** Mohammed Saaquib Hussain
+* **Contact number:** 8123977029
+* **Email Address:** mohammedsaaquibhusaain@gmail.com
