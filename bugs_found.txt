@@ -1,0 +1,148 @@
+================================================================
+BUGS FOUND — Level 1 ROS 2 Navigation Assignment (Testbed)
+================================================================
+
+This file documents bugs found in the starter repository, how
+they were identified, and how they were fixed. Bugs are listed
+in the order they were discovered.
+
+
+----------------------------------------------------------------
+BUG 1 — CMake syntax error in testbed_description
+----------------------------------------------------------------
+File: testbed_description/CMakeLists.txt
+
+Problem:
+  ament_package was called without parentheses, which is invalid
+  CMake syntax and prevents the package from building.
+
+Fix:
+  Changed to:
+    ament_package()
+
+
+----------------------------------------------------------------
+BUG 2 — Incorrect map image filename in map YAML
+----------------------------------------------------------------
+File: testbed_bringup/maps/testbed_world.yaml
+
+Problem:
+  The YAML referenced a nonexistent image file:
+    wrong_path_testbed_world.pgm
+  The actual file present in the maps directory is:
+    testbed_world.pgm
+
+Fix:
+  Corrected the "image" field in the YAML to point to
+  testbed_world.pgm.
+
+
+----------------------------------------------------------------
+BUG 3 — Malformed Gazebo XML (stray closing bracket)
+----------------------------------------------------------------
+File: testbed_description/urdf/testbed.gazebo
+
+Problem:
+  A stray ">" character appeared immediately after the IMU
+  sensor's closing tag, producing malformed/invalid XML that
+  breaks URDF/Gazebo parsing.
+
+Fix:
+  Removed the stray ">" character to restore valid XML.
+
+
+----------------------------------------------------------------
+BUG 4 — LiDAR max range too short for navigation
+----------------------------------------------------------------
+File: testbed_description/urdf/testbed.gazebo
+
+Problem:
+  The LiDAR sensor's maximum range was set to 1.5 m, which is
+  far too short for reliable AMCL localization and Nav2 costmap
+  obstacle detection in a room-scale environment.
+
+Fix:
+  Increased laser max range from 1.5 m to 10.0 m.
+
+
+----------------------------------------------------------------
+BUG 5 — maps/ directory not installed by testbed_bringup
+----------------------------------------------------------------
+File: testbed_bringup/CMakeLists.txt
+
+Problem:
+  The package's install(DIRECTORY ...) rule only installed the
+  launch/ directory. The maps/ directory (containing
+  testbed_world.yaml and testbed_world.pgm) was never copied to
+  the package's share/ folder on build. As a result, any node
+  using get_package_share_directory('testbed_bringup') to locate
+  the map (as testbed_navigation's map_loader.launch.py does)
+  would fail to find it at runtime, even though the files exist
+  in the source tree.
+
+  This bug was discovered while building testbed_navigation's
+  map_loader.launch.py, which needed to reference the map file
+  via the package's installed share directory.
+
+Fix:
+  Added "maps" to the installed directories list in
+  testbed_bringup/CMakeLists.txt:
+
+    install(
+      DIRECTORY
+        launch
+        maps
+      DESTINATION
+        share/${PROJECT_NAME}/
+    )
+
+
+----------------------------------------------------------------
+NOT COUNTED AS BUGS (environment/tooling issues, not code bugs)
+----------------------------------------------------------------
+
+1. Missing ros-humble-xacro in the Docker environment.
+   This caused an initial launch failure but is a missing
+   dependency in the Docker image, not a defect in the starter
+   repository's source code. Resolved by installing the package.
+
+2. Gazebo gzserver/gzclient "Exception sending a multicast
+   message: Network is unreachable" log spam.
+   Caused by Docker's default bridge network not supporting
+   multicast, which Gazebo attempts for distributed simulation
+   discovery. Cosmetic log noise only; does not affect
+   simulation correctness or navigation functionality.
+
+3. RViz/gzclient failing to start with Qt "xcb platform plugin"
+   errors after a container restart.
+   Caused by the host's X11 access control list resetting after
+   the Docker container was interrupted by a SIGHUP (from a
+   closed terminal session) and later restarted. Resolved by
+   running `xhost +local:docker` on the host once per host login
+   session, and ensuring the DISPLAY environment variable inside
+   the container matched the host's value.
+
+4. Harmless startup-only TF timing warnings, e.g.:
+     "Message Filter dropping message: frame 'lidar_link_1' ...
+      timestamp on the message is earlier than all the data in
+      the transform cache"
+   These occur briefly when a node subscribes to /tf before the
+   buffer has a few seconds of history, and self-resolve within
+   1-2 seconds. Observed during map_loader, localization, and
+   navigation bring-up; did not affect final functionality.
+
+5. Transient controller_server trajectory aborts on the first
+   navigation goal after nav2 bring-up, e.g.:
+     "[GoalDistCritic]: None of the points of the global plan
+      were in the local costmap."
+     "[DWBLocalPlanner]: No valid trajectories out of 419!"
+   Occurred on the very first goal sent after all Nav2 servers
+   had just activated, before the local costmap had received
+   enough time/scan data to fully populate its rolling window
+   near the start of the global path. Nav2's built-in recovery
+   (automatic local costmap clearing + controller retry) resolved
+   this automatically within ~1 second, and the goal succeeded on
+   retry. Not a configuration defect; demonstrates the recovery
+   behavior working as intended. Subsequent goals in the same
+   session succeeded on the first attempt with no aborts.
+
