@@ -736,7 +736,25 @@ This project demonstrates a modular ROS 2 navigation architecture using Nav2 com
 The implementation avoids relying on the complete `nav2_bringup` workflow and instead builds the required navigation pipeline from individual Nav2 components, providing a clearer understanding of how the ROS 2 navigation stack operates internally — and demonstrating that understanding through successful autonomous navigation in simulation.
 
 ---
+## Demo
 
+### 1. Robot spawned in Gazebo
+![Gazebo spawn](docs/screenshots/01_gazebo_spawn.png)
+
+### 2. Map loaded in RViz
+![Map in RViz](docs/screenshots/02_map_rviz.png)
+
+### 3. Robot localized (AMCL particle convergence)
+![Localized](docs/screenshots/03_localized.png)
+
+### 4. Navigation goal set and path planned
+![Goal path](docs/screenshots/04_goal_path.png)
+
+### 5. Robot navigating to goal
+![Navigating](docs/screenshots/05a_navigating.png)
+
+### 6. Goal succeeded
+![Goal succeeded](docs/screenshots/05b_goal_succeeded_terminal.png)
 # 23. Contact Info
 
 * **Name:** Mohammed Saaquib Hussain
